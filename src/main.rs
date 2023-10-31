@@ -1,6 +1,9 @@
 use clap::Parser;
-use reth::primitives::{SealedBlock, TransactionSigned, SealedHeader, Withdrawal};
-use reth::rpc::{types::{Block, BlockTransactions}, compat::engine::payload::try_block_to_payload};
+use reth::primitives::{SealedBlock, SealedHeader, TransactionSigned, Withdrawal};
+use reth::rpc::{
+    compat::engine::payload::try_block_to_payload,
+    types::{Block, BlockTransactions},
+};
 
 /// Parses the given json file, creating an execution payload from it.
 #[derive(Parser, Debug)]
@@ -28,7 +31,9 @@ fn main() {
     // TODO: upstream into rpc compat
     let txs = match block.transactions {
         // this would be an error in upstream
-        BlockTransactions::Hashes(hashes) => panic!("send the eth_getBlockByHash request with full: `true`"),
+        BlockTransactions::Hashes(hashes) => {
+            panic!("send the eth_getBlockByHash request with full: `true`")
+        }
         BlockTransactions::Full(txs) => txs,
         // this would be an error in upstream
         BlockTransactions::Uncle => panic!("this should not be run on uncle blocks"),
@@ -44,7 +49,8 @@ fn main() {
     // TODO: blob versioned hashes from txs
 
     // convert withdrawals into primitive withdrawals
-    let withdrawals: Option<Vec<Withdrawal>> = todo!("convert withdrawals into primitive withdrawals");
+    let withdrawals: Option<Vec<Withdrawal>> =
+        todo!("convert withdrawals into primitive withdrawals");
 
     // convert into an execution payload
     // TODO: this will fail if transactions are not full.
