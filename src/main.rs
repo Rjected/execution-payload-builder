@@ -1,8 +1,9 @@
 use clap::Parser;
 use reth::primitives::{
     transaction::{TxEip1559, TxEip2930, TxEip4844, TxLegacy},
-    Header as PrimitiveHeader, SealedBlock, SealedHeader, Transaction as PrimitiveTransaction,
-    TransactionSigned, Withdrawal as PrimitiveWithdrawal, U256,
+    AccessList, Header as PrimitiveHeader, SealedBlock, SealedHeader,
+    Transaction as PrimitiveTransaction, TransactionSigned, Withdrawal as PrimitiveWithdrawal,
+    U256,
 };
 use reth::rpc::types::Transaction;
 use reth::rpc::{
@@ -116,59 +117,64 @@ fn rpc_withdrawal_to_primitive_withdrawal(withdrawal: Withdrawal) -> PrimitiveWi
 
 // convert a rpc transaction to a primitive transaction
 fn rpc_transaction_to_primitive_transaction(transaction: Transaction) -> TransactionSigned {
-    let nonce = transaction.nonce;
+    let nonce = transaction.nonce.to();
     let to = transaction.to;
-    let value = transaction.value;
+    let value = transaction.value.into();
+    let chain_id = transaction.chain_id.unwrap().to();
+    let input = transaction.input;
+    // todo: convert access list item types
+    let access_list = AccessList(transaction.access_list.unwrap_or_default());
+    let gas_limit = transaction.gas.to();
     // just condition on tx type
     if transaction.transaction_index == Some(U256::from(3)) {
         PrimitiveTransaction::Eip4844(TxEip4844 {
-            chain_id: (),
-            nonce: (),
-            gas_limit: (),
-            max_fee_per_gas: (),
-            max_priority_fee_per_gas: (),
+            chain_id,
+            nonce,
+            gas_limit,
+            max_fee_per_gas: transaction.max_fee_per_gas.unwrap().to(),
+            max_priority_fee_per_gas: transaction.max_priority_fee_per_gas.unwrap().to(),
             to: (),
-            value: (),
-            access_list: (),
-            blob_versioned_hashes: (),
-            max_fee_per_blob_gas: (),
-            input: (),
+            value,
+            access_list,
+            blob_versioned_hashes: transaction.blob_versioned_hashes,
+            max_fee_per_blob_gas: transaction.max_fee_per_blob_gas.unwrap().to(),
+            input,
         })
     }
     if transaction.transaction_type == Some(U256::from(2)) {
         PrimitiveTransaction::Eip1559(TxEip1559 {
-            chain_id: (),
-            nonce: (),
-            gas_limit: (),
-            max_fee_per_gas: (),
-            max_priority_fee_per_gas: (),
+            chain_id,
+            nonce,
+            gas_limit,
+            max_fee_per_gas: transaction.max_fee_per_gas.unwrap().to(),
+            max_priority_fee_per_gas: transaction.max_priority_fee_per_gas.unwrap().to(),
             to: (),
-            value: (),
-            access_list: (),
-            input: (),
+            value,
+            access_list,
+            input,
         })
     }
     if transaction.transaction_type == Some(U256::from(1)) {
         PrimitiveTransaction::Eip2930(TxEip2930 {
-            chain_id: (),
-            nonce: (),
-            gas_price: (),
-            gas_limit: (),
+            chain_id,
+            nonce,
+            gas_price: transaction.gas_price.unwrap().to(),
+            gas_limit,
             to: (),
-            value: (),
-            access_list: (),
-            input: (),
+            value,
+            access_list,
+            input,
         })
     }
 
     // otherwise legacy
     PrimitiveTransaction::Legacy(TxLegacy {
-        chain_id: (),
-        nonce: (),
-        gas_price: (),
-        gas_limit: (),
+        chain_id,
+        nonce,
+        gas_price: transaction.gas_price.unwrap().to(),
+        gas_limit,
         to: (),
-        value: (),
-        input: (),
+        value,
+        input,
     })
 }
