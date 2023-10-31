@@ -1,8 +1,7 @@
 use clap::Parser;
-use reth::rpc::types::Transaction;
 use reth::rpc::{
     compat::engine::payload::try_block_to_payload,
-    types::{Block, BlockTransactions, Header, Withdrawal},
+    types::{Block, BlockTransactions, ExecutionPayload, Header, Transaction, Withdrawal},
 };
 use reth::{
     primitives::{
@@ -29,9 +28,6 @@ fn main() {
     // parse the file
     let file = std::fs::read_to_string(args.path).unwrap();
     let block: Block = serde_json::from_str(&file).unwrap();
-
-    // print the block
-    println!("Extracted block: {:#?}", block);
 
     // extract the parent beacon block root
     let parent_beacon_block_root = block.header.parent_beacon_block_root;
@@ -87,7 +83,20 @@ fn main() {
 
     // convert into something that can be sent to the engine, ie `cast rpc` or something
     // this needs to be combined with the parent beacon block root, and blob versioned hashes
-    let json_payload = serde_json::to_string(&execution_payload).unwrap();
+    let json_payload = match execution_payload {
+        ExecutionPayload::V1(payload) => serde_json::to_string(&payload).unwrap(),
+        ExecutionPayload::V2(payload) => serde_json::to_string(&payload).unwrap(),
+        ExecutionPayload::V3(payload) => serde_json::to_string(&payload).unwrap(),
+    };
+
+    // print blob versioned hashes and parent beacon block root
+    let json_versioned_hashes = serde_json::to_string(&blob_versioned_hashes).unwrap();
+    let json_parent_beacon_block_root = serde_json::to_string(&parent_beacon_block_root).unwrap();
+    println!("Blob versioned hashes: \n{}", json_versioned_hashes);
+    println!(
+        "Parent beacon block root: \n{}",
+        json_parent_beacon_block_root
+    );
 
     // print the payload
     println!("Execution payload: \n{}", json_payload);
