@@ -85,9 +85,12 @@ fn main() {
     // convert to execution payload
     let execution_payload = try_block_to_payload(sealed);
 
-    println!("Execution payload: {:#?}", execution_payload);
     // convert into something that can be sent to the engine, ie `cast rpc` or something
     // this needs to be combined with the parent beacon block root, and blob versioned hashes
+    let json_payload = serde_json::to_string(&execution_payload).unwrap();
+
+    // print the payload
+    println!("Execution payload: \n{}", json_payload);
 }
 
 /// Converts a rpc header into primitive header
