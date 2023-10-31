@@ -1,8 +1,10 @@
 use clap::Parser;
 use reth::primitives::{
-    Header as PrimitiveHeader, SealedBlock, SealedHeader, TransactionSigned,
-    Withdrawal as PrimitiveWithdrawal,
+    transaction::{TxEip1559, TxEip2930, TxEip4844, TxLegacy},
+    Header as PrimitiveHeader, SealedBlock, SealedHeader, Transaction as PrimitiveTransaction,
+    TransactionSigned, Withdrawal as PrimitiveWithdrawal, U256,
 };
+use reth::rpc::types::Transaction;
 use reth::rpc::{
     compat::engine::payload::try_block_to_payload,
     types::{Block, BlockTransactions, Header, Withdrawal},
@@ -110,4 +112,63 @@ fn rpc_withdrawal_to_primitive_withdrawal(withdrawal: Withdrawal) -> PrimitiveWi
         validator_index: withdrawal.validator_index,
         address: withdrawal.address,
     }
+}
+
+// convert a rpc transaction to a primitive transaction
+fn rpc_transaction_to_primitive_transaction(transaction: Transaction) -> TransactionSigned {
+    let nonce = transaction.nonce;
+    let to = transaction.to;
+    let value = transaction.value;
+    // just condition on tx type
+    if transaction.transaction_index == Some(U256::from(3)) {
+        PrimitiveTransaction::Eip4844(TxEip4844 {
+            chain_id: (),
+            nonce: (),
+            gas_limit: (),
+            max_fee_per_gas: (),
+            max_priority_fee_per_gas: (),
+            to: (),
+            value: (),
+            access_list: (),
+            blob_versioned_hashes: (),
+            max_fee_per_blob_gas: (),
+            input: (),
+        })
+    }
+    if transaction.transaction_type == Some(U256::from(2)) {
+        PrimitiveTransaction::Eip1559(TxEip1559 {
+            chain_id: (),
+            nonce: (),
+            gas_limit: (),
+            max_fee_per_gas: (),
+            max_priority_fee_per_gas: (),
+            to: (),
+            value: (),
+            access_list: (),
+            input: (),
+        })
+    }
+    if transaction.transaction_type == Some(U256::from(1)) {
+        PrimitiveTransaction::Eip2930(TxEip2930 {
+            chain_id: (),
+            nonce: (),
+            gas_price: (),
+            gas_limit: (),
+            to: (),
+            value: (),
+            access_list: (),
+            input: (),
+        })
+    }
+
+    // otherwise legacy
+    PrimitiveTransaction::Legacy(TxLegacy {
+        chain_id: (),
+        nonce: (),
+        gas_price: (),
+        gas_limit: (),
+        to: (),
+        value: (),
+        input: (),
+    })
 }
