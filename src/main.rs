@@ -98,6 +98,9 @@ fn main() {
         json_parent_beacon_block_root
     );
 
+    // TODO: there's something wrong with this, this yields a block with an invalid hash
+    // error:
+    // {"status":"INVALID","latestValidHash":null,"validationError":"block hash mismatch: want 0x58fee1cac2a8ef87a84e6a77cef27b4935e1cf8ae8320afdd5c176ef17b5d94a, got 0x0d11f949bd7e21f0f67ba5ef2217f9361b3f1cfd5fbb803e927d7a78c10f75a4"}
     // print the payload
     println!("Execution payload: \n{}", json_payload);
 }
