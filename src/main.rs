@@ -1,10 +1,11 @@
 use clap::Parser;
 use reth::primitives::{
-    Header as PrimitiveHeader, SealedBlock, SealedHeader, TransactionSigned, Withdrawal,
+    Header as PrimitiveHeader, SealedBlock, SealedHeader, TransactionSigned,
+    Withdrawal as PrimitiveWithdrawal,
 };
 use reth::rpc::{
     compat::engine::payload::try_block_to_payload,
-    types::{Block, BlockTransactions, Header},
+    types::{Block, BlockTransactions, Header, Withdrawal},
 };
 
 /// Parses the given json file, creating an execution payload from it.
@@ -50,8 +51,12 @@ fn main() {
     // TODO: blob versioned hashes from txs
 
     // convert withdrawals into primitive withdrawals
-    let withdrawals: Option<Vec<Withdrawal>> =
-        todo!("convert withdrawals into primitive withdrawals");
+    let withdrawals: Option<Vec<PrimitiveWithdrawal>> = block.withdrawals.map(|withdrawals| {
+        withdrawals
+            .into_iter()
+            .map(rpc_withdrawal_to_primitive_withdrawal)
+            .collect()
+    });
 
     // convert into an execution payload
     // TODO: this will fail if transactions are not full.
@@ -94,5 +99,15 @@ fn rpc_header_to_primitive_header(header: Header) -> PrimitiveHeader {
         blob_gas_used: header.blob_gas_used.map(|x| x.to()),
         excess_blob_gas: header.excess_blob_gas.map(|x| x.to()),
         parent_beacon_block_root: header.parent_beacon_block_root,
+    }
+}
+
+// convert a rpc withdrawal into a primitive withdrawal
+fn rpc_withdrawal_to_primitive_withdrawal(withdrawal: Withdrawal) -> PrimitiveWithdrawal {
+    PrimitiveWithdrawal {
+        index: withdrawal.index,
+        amount: withdrawal.amount,
+        validator_index: withdrawal.validator_index,
+        address: withdrawal.address,
     }
 }
