@@ -1,14 +1,17 @@
 use clap::Parser;
-use reth::primitives::{
-    transaction::{TxEip1559, TxEip2930, TxEip4844, TxLegacy},
-    AccessList, AccessListItem, Header as PrimitiveHeader, SealedBlock, Signature,
-    Transaction as PrimitiveTransaction, TransactionKind, TransactionSigned,
-    Withdrawal as PrimitiveWithdrawal, U64,
-};
 use reth::rpc::types::Transaction;
 use reth::rpc::{
     compat::engine::payload::try_block_to_payload,
     types::{Block, BlockTransactions, Header, Withdrawal},
+};
+use reth::{
+    primitives::{
+        transaction::{TxEip1559, TxEip2930, TxEip4844, TxLegacy},
+        AccessList, AccessListItem, Header as PrimitiveHeader, SealedBlock, Signature,
+        Transaction as PrimitiveTransaction, TransactionKind, TransactionSigned,
+        Withdrawal as PrimitiveWithdrawal, U64,
+    },
+    rpc::types::Parity,
 };
 
 /// Parses the given json file, creating an execution payload from it.
@@ -152,9 +155,16 @@ fn rpc_transaction_to_primitive_transaction(transaction: Transaction) -> Transac
 
     // massive chain ids can be ignored here
     let v: u64 = rpc_signature.v.to();
-    let odd_y_parity = if v >= 35 {
+
+    // if y parity is defined use that
+    // TODO: ugh eip155 v math
+    let odd_y_parity = if let Some(Parity(parity)) = rpc_signature.y_parity {
+        parity
+    } else if v >= 35 {
         // EIP-155: v = {0, 1} + CHAIN_ID * 2 + 35
         ((v - 35) % 2) != 0
+    } else if v == 0 || v == 1 {
+        v == 1
     } else {
         // non-EIP-155 legacy scheme, v = 27 for even y-parity, v = 28 for odd y-parity
         if v != 27 && v != 28 {
