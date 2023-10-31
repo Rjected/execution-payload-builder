@@ -1,0 +1,11 @@
+[package]
+name = "execution-payload-builder"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+clap = { version = "4.4.7", features = ["derive"] }
+reth = { git = "https://github.com/paradigmxyz/reth" }
+serde_json = "1.0.108"
