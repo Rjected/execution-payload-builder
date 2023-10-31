@@ -57,7 +57,7 @@ fn main() {
     let mut blob_versioned_hashes = Vec::new();
     for tx in &body {
         if let PrimitiveTransaction::Eip4844(tx) = &tx.transaction {
-            blob_versioned_hashes.push(tx.blob_versioned_hashes.clone());
+            blob_versioned_hashes.extend(tx.blob_versioned_hashes.clone());
         }
     }
 
@@ -90,19 +90,26 @@ fn main() {
     };
 
     // print blob versioned hashes and parent beacon block root
+    // let json_versioned_hashes = serde_json::to_string(&blob_versioned_hashes.into_iter().map(|versioned_hash| format!("{versioned_hash}")).collect::<Vec<String>>()).unwrap();
     let json_versioned_hashes = serde_json::to_string(&blob_versioned_hashes).unwrap();
     let json_parent_beacon_block_root = serde_json::to_string(&parent_beacon_block_root).unwrap();
-    println!("Blob versioned hashes: \n{}", json_versioned_hashes);
-    println!(
-        "Parent beacon block root: \n{}",
-        json_parent_beacon_block_root
-    );
+
+    // craft the request to pass into `cast rpc --raw`
+    let json_request = "[".to_string()
+        + &[
+            json_payload,
+            json_versioned_hashes,
+            json_parent_beacon_block_root,
+        ]
+        .join(",")
+        + "]";
 
     // TODO: there's something wrong with this, this yields a block with an invalid hash
     // error:
     // {"status":"INVALID","latestValidHash":null,"validationError":"block hash mismatch: want 0x58fee1cac2a8ef87a84e6a77cef27b4935e1cf8ae8320afdd5c176ef17b5d94a, got 0x0d11f949bd7e21f0f67ba5ef2217f9361b3f1cfd5fbb803e927d7a78c10f75a4"}
     // print the payload
-    println!("Execution payload: \n{}", json_payload);
+    // println!("newPayloadV3 request: \n{}", json_request);
+    println!("{}", json_request);
 }
 
 /// Converts a rpc header into primitive header
