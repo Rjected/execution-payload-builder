@@ -1,8 +1,10 @@
 use clap::Parser;
-use reth::primitives::{SealedBlock, SealedHeader, TransactionSigned, Withdrawal};
+use reth::primitives::{
+    Header as PrimitiveHeader, SealedBlock, SealedHeader, TransactionSigned, Withdrawal,
+};
 use reth::rpc::{
     compat::engine::payload::try_block_to_payload,
-    types::{Block, BlockTransactions},
+    types::{Block, BlockTransactions, Header},
 };
 
 /// Parses the given json file, creating an execution payload from it.
@@ -43,8 +45,7 @@ fn main() {
     let body: Vec<TransactionSigned> = todo!("convert txs into primitive txs");
 
     // convert header into a primitive header
-    // TODO: ustream into rpc compat
-    let header: SealedHeader = todo!("convert header into a primitive header");
+    let header = rpc_header_to_primitive_header(block.header).seal_slow();
 
     // TODO: blob versioned hashes from txs
 
@@ -67,4 +68,31 @@ fn main() {
 
     // convert into something that can be sent to the engine, ie `cast rpc` or something
     // this needs to be combined with the parent beacon block root, and blob versioned hashes
+}
+
+/// Converts a rpc header into primitive header
+// TODO: upstream into rpc compat
+fn rpc_header_to_primitive_header(header: Header) -> PrimitiveHeader {
+    PrimitiveHeader {
+        parent_hash: header.parent_hash,
+        timestamp: header.timestamp.to(),
+        ommers_hash: header.uncles_hash,
+        beneficiary: header.miner,
+        state_root: header.state_root,
+        receipts_root: header.receipts_root,
+        transactions_root: header.transactions_root,
+        base_fee_per_gas: header.base_fee_per_gas.map(|x| x.to()),
+        logs_bloom: header.logs_bloom,
+        withdrawals_root: header.withdrawals_root,
+        difficulty: header.difficulty.to(),
+        number: header.number.unwrap().to(),
+        gas_used: header.gas_used.to(),
+        gas_limit: header.gas_limit.to(),
+        mix_hash: header.mix_hash,
+        nonce: header.nonce.unwrap().into(),
+        extra_data: header.extra_data,
+        blob_gas_used: header.blob_gas_used.map(|x| x.to()),
+        excess_blob_gas: header.excess_blob_gas.map(|x| x.to()),
+        parent_beacon_block_root: header.parent_beacon_block_root,
+    }
 }
