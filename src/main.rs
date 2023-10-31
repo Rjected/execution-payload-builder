@@ -20,6 +20,14 @@ struct Args {
     /// Path to the json file to parse
     #[arg(short, long)]
     path: String,
+
+    /// The engine rpc url to use
+    #[arg(short, long)]
+    rpc_url: Option<String>,
+
+    /// The jwt secret to use
+    #[arg(short, long)]
+    jwt_secret: Option<String>,
 }
 
 fn main() {
@@ -104,12 +112,23 @@ fn main() {
         .join(",")
         + "]'";
 
-    // TODO: there's something wrong with this, this yields a block with an invalid hash
-    // error:
-    // {"status":"INVALID","latestValidHash":null,"validationError":"block hash mismatch: want 0x58fee1cac2a8ef87a84e6a77cef27b4935e1cf8ae8320afdd5c176ef17b5d94a, got 0x0d11f949bd7e21f0f67ba5ef2217f9361b3f1cfd5fbb803e927d7a78c10f75a4"}
+    // construct the cast rpc command
+    let mut prefix = "cast rpc".to_string();
+    let suffix = "engine_newPayloadV3 --raw ".to_string() + &json_request;
+
+    if let Some(rpc_url) = args.rpc_url {
+        prefix += &format!(" --rpc-url {}", rpc_url);
+    }
+
+    if let Some(secret) = args.jwt_secret {
+        prefix += &format!(" --jwt-secret {}", secret);
+    }
+
+    // add the suffix and request
+    prefix += &format!(" {}", suffix);
+
     // print the payload
-    // println!("newPayloadV3 request: \n{}", json_request);
-    println!("{}", json_request);
+    println!("{prefix}");
 }
 
 /// Converts a rpc header into primitive header
