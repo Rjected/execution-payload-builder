@@ -95,14 +95,14 @@ fn main() {
     let json_parent_beacon_block_root = serde_json::to_string(&parent_beacon_block_root).unwrap();
 
     // craft the request to pass into `cast rpc --raw`
-    let json_request = "[".to_string()
+    let json_request = "'[".to_string()
         + &[
             json_payload,
             json_versioned_hashes,
             json_parent_beacon_block_root,
         ]
         .join(",")
-        + "]";
+        + "]'";
 
     // TODO: there's something wrong with this, this yields a block with an invalid hash
     // error:
